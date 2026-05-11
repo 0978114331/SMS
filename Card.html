@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shorcut icon" href="Img/KC.png" type="image/x-icon">
+    <title>CREACTE IDCARD</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <style>
+        :root { --primary: #0984e3; --secondary: #6c5ce7; --dark: #2c3e50; --success: #00b894; --danger: #d63031; --light: #f0f2f5; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Kantumruy Pro', sans-serif; }
+        body { background: var(--light); padding-top: 70px; }
+
+        /* Navigation */
+        nav { background: var(--dark); padding: 12px 3%; display: flex; justify-content: space-between; align-items: center; position: fixed; top: 0; width: 100%; z-index: 1000; color: white; }
+        .nav-links { display: flex; gap: 10px; }
+        .nav-links button, .nav-links a { background: rgba(255,255,255,0.1); border: none; color: white; padding: 8px 15px; border-radius: 5px; cursor: pointer; transition: 0.3s; text-decoration: none; display: flex; align-items: center; gap: 5px; font-size: 14px; }
+        .nav-links button:hover, .nav-links a:hover { background: rgba(255,255,255,0.2); }
+        .nav-links button.active { background: var(--primary); }
+
+        .container { max-width: 1100px; margin: auto; padding: 20px; }
+        .card-box { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
+
+        /* ID Card Design */
+        .id-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 15px; margin-top: 20px; }
+        .student-card { 
+            width: 310px; height: 185px; background: white; border-radius: 10px; position: relative; 
+            overflow: hidden; border: 1px solid #ccc; box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: flex; flex-direction: column;
+        }
+        .card-header { height: 35px; background: linear-gradient(90deg, var(--dark), var(--primary)); color: white; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; letter-spacing: 1px; }
+        .card-footer { height: 10px; background: linear-gradient(90deg, var(--primary), var(--secondary)); width: 100%; }
+        .card-body { display: flex; flex: 1; padding: 10px; position: relative; }
+        .photo-area { width: 85px; display: flex; flex-direction: column; align-items: center; }
+        .photo-placeholder { width: 75px; height: 90px; background: #f0f0f0; border: 2px solid var(--primary); border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #ccc; overflow: hidden; }
+        .photo-placeholder img { width: 100%; height: 100%; object-fit: cover; }
+        .info-area { flex: 1; padding-left: 12px; display: flex; flex-direction: column; }
+        .info-area h4 { color: var(--primary); font-size: 15px; margin-bottom: 2px; }
+        .info-area p { font-size: 11px; color: #555; margin-bottom: 1px; }
+        .qr-right { position: absolute; right: 10px; bottom: 10px; background: white; padding: 2px; border: 1px solid #eee; }
+
+        /* Admin Controls */
+        .card-actions { position: absolute; top: 40px; right: 5px; display: flex; flex-direction: column; gap: 4px; z-index: 5; }
+        .btn-mini { width: 28px; height: 28px; border-radius: 50%; border: none; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; font-size: 11px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+
+        .btn { padding: 10px 18px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; display: inline-flex; align-items: center; gap: 8px; transition: 0.3s; }
+        input { padding: 10px; border: 1px solid #ddd; border-radius: 5px; width: 100%; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; }
+        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
+        th { background: #f8f9fa; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+     @media print {
+    /* កំណត់ទំហំក្រដាស និងគែម */
+    @page {
+        size: A4;
+        margin: 1cm;
+    }
+
+    /* លាក់ផ្នែកមិនចាំបាច់ */
+    nav, .btn, .no-print, .card-actions, h3 { 
+        display: none !important; 
+    }
+
+    body { 
+        background: none; 
+        padding: 0; 
+    }
+
+    .id-grid { 
+        display: grid; 
+        grid-template-columns: repeat(2, 1fr); 
+        gap: 10px; 
+    }
+
+    .student-card { 
+        width: 8.5cm; 
+        height: 5.4cm; 
+        border: 0.5px solid #ccc;
+        
+        /* ⬇️ បញ្ជាឱ្យ Browser ព្រីនពណ៌ Background ចេញមក (សំខាន់បំផុត) */
+        -webkit-print-color-adjust: exact !important; 
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+
+        /* ការពារកុំឱ្យដាច់កាតឆ្លងទំព័រ */
+        page-break-inside: avoid;
+        break-inside: avoid;
+        margin-bottom: 10px;
+    }
+
+    /* ធានាថាពណ៌ Header និង Footer ចេញមកពេញ */
+    .card-header {
+        background: linear-gradient(90deg, #2c3e50, #0984e3) !important;
+        -webkit-print-color-adjust: exact !important;
+    }
+
+    .card-footer {
+        background: linear-gradient(90deg, #0984e3, #6c5ce7) !important;
+        -webkit-print-color-adjust: exact !important;
+    }
+}
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div style="font-weight: bold; cursor:pointer;" onclick="location.reload()"><i class="fas fa-user-shield"></i>CREACTE C</div>
+        <div class="nav-links">
+            <a href="LIST.html"><i class="fas fa-home"></i> Home</a>
+            <button class="nav-btn active" onclick="switchTab('scan-tab', this)"><i class="fas fa-qrcode"></i> ស្កេនវត្តមាន</button>
+            <button class="nav-btn" onclick="switchTab('id-tab', this)"><i class="fas fa-address-card"></i> បង្កើតកាតសិស្ស</button>
+            <button class="nav-btn" onclick="switchTab('data-tab', this)"><i class="fas fa-chart-bar"></i> របាយការណ៍</button>
+        </div>
+    </nav>
+
+    <div class="container">
+        
+        <div id="scan-tab" class="tab-content active">
+            <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 20px;">
+                <div class="card-box" style="text-align: center;">
+                    <div id="reader"></div>
+                    <button class="btn" style="background: var(--primary); color:white; width: 100%; margin-top: 15px; justify-content: center;" onclick="toggleCamera()" id="btnCam">
+                        <i class="fas fa-camera"></i> បើកកាមេរ៉ា
+                    </button>
+                </div>
+                <div class="card-box" style="background: var(--dark); color: white; text-align: center;">
+                    <p>ម៉ោងបច្ចុប្បន្ន</p>
+                    <h1 id="clock" style="font-size: 3rem; color: #55efc4; font-family: monospace;">00:00:00</h1>
+                    <hr style="border: 0.5px solid #444; margin: 15px 0;">
+                    <h2 id="todayCount" style="color: var(--success);">0</h2>
+                    <p>ស្កេនថ្ងៃនេះ</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="id-tab" class="tab-content">
+            <div class="card-box no-print">
+                <h3><i class="fas fa-user-plus"></i> បញ្ចូលព័ត៌មានសិស្ស (Admin Only)</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1.5fr 1.5fr 0.8fr; gap: 10px; margin-top: 15px;">
+                    <input type="hidden" id="editIndex" value="-1">
+                    <input type="text" id="stdID" placeholder="ID សិស្ស">
+                    <input type="text" id="stdName" placeholder="ឈ្មោះសិស្ស">
+                    <input type="file" id="stdPhoto" accept="image/*">
+                    <button class="btn" style="background: var(--success); color:white;" onclick="saveStudent()" id="btnSave">រក្សាទុក</button>
+                </div>
+            </div>
+
+            <div class="card-box">
+                <div style="display: flex; justify-content: space-between; align-items: center;" class="no-print">
+                    <h3><i class="fas fa-id-card"></i> បញ្ជីកាតសិស្ស</h3>
+                    <button class="btn" style="background: var(--dark); color:white;" onclick="window.print()"><i class="fas fa-print"></i> បោះពុម្ព (A4)</button>
+                </div>
+                <div id="idCardContainer" class="id-grid"></div>
+            </div>
+        </div>
+
+        <div id="data-tab" class="tab-content">
+            <div class="card-box">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3>របាយការណ៍វត្តមាន</h3>
+                    <button class="btn" style="background:#27ae60; color:white;" onclick="exportToExcel()">Excel</button>
+                </div>
+                <table id="reportTable">
+                    <thead><tr><th>ថ្ងៃទី</th><th>ID</th><th>ឈ្មោះ</th><th>ម៉ោងចូល</th><th>ម៉ោងចេញ</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <audio id="beep" src="https://www.soundjay.com/buttons/beep-07a.mp3"></audio>
+
+    <script>
+        // Password Admin
+        const adminPass = "123";
+
+        let students = JSON.parse(localStorage.getItem('sys_students')) || [];
+        let logs = JSON.parse(localStorage.getItem('sys_logs')) || [];
+        const html5QrCode = new Html5Qrcode("reader");
+
+        window.onload = () => { renderIDCards(); updateUI(); };
+
+        async function checkAdmin() {
+            const { value: password } = await Swal.fire({
+                title: 'បញ្ចូលលេខសម្ងាត់ Admin',
+                input: 'password',
+                inputPlaceholder: 'Password...',
+                inputAttributes: { maxlength: 10, autocapitalize: 'off', autocorrect: 'off' },
+                showCancelButton: true
+            });
+            if (password === adminPass) return true;
+            if (password !== undefined) Swal.fire('Error', 'លេខសម្ងាត់មិនត្រឹមត្រូវ!', 'error');
+            return false;
+        }
+
+   function saveStudent() {
+    const id = document.getElementById('stdID').value;
+    const name = document.getElementById('stdName').value;
+    const photoFile = document.getElementById('stdPhoto').files[0];
+    const editIndex = parseInt(document.getElementById('editIndex').value);
+
+    // បើអត់មាន ID ឬ ឈ្មោះ គឺមិនអាចបង្កើតកាតបានទេ
+    if(!id || !name) return Swal.fire('បំពេញមិនគ្រប់', 'សូមបញ្ចូល ID និង ឈ្មោះសិស្ស!', 'warning');
+
+    // មុខងារសម្រាប់រក្សាទុកទិន្នន័យចុងក្រោយ
+    const finalize = (imgBase64) => {
+        // កំណត់រូបថត៖ បើមានរូបថ្មីយករូបថ្មី, បើកំពុងកែប្រែហើយអត់ដាក់រូបថ្មី គឺយករូបចាស់, បើគ្មានសោះដាក់ null
+        let finalPhoto = null;
+        if (imgBase64) {
+            finalPhoto = imgBase64;
+        } else if (editIndex > -1 && students[editIndex].photo) {
+            finalPhoto = students[editIndex].photo;
+        }
+
+        const stdData = { id, name, photo: finalPhoto };
+
+        if (editIndex === -1) {
+            // ឆែកមើលក្រែងលោមាន ID នេះរួចហើយ
+            if(students.find(s => s.id === id)) return Swal.fire('Error', 'ID នេះមានរួចហើយ!', 'error');
+            students.push(stdData);
+        } else {
+            // ធ្វើបច្ចុប្បន្នភាពទិន្នន័យចាស់ (Edit)
+            students[editIndex] = stdData;
+            document.getElementById('editIndex').value = "-1";
+            document.getElementById('btnSave').innerText = "រក្សាទុក";
+        }
+        
+        try {
+            localStorage.setItem('sys_students', JSON.stringify(students));
+            renderIDCards(); 
+            clearInput();
+            Swal.fire('ជោគជ័យ', 'បង្កើតកាតបានសម្រេច!', 'success');
+        } catch (e) {
+            Swal.fire('Error', 'អង្គចងចាំពេញ! មិនអាចរក្សាទុកបានទេ។', 'error');
+            // ដកទិន្នន័យដែលទើបបញ្ចូលវិញ បើ save មិនចូល
+            if (editIndex === -1) students.pop(); 
+        }
+    };
+
+    // បើអ្នកប្រើប្រាស់បានជ្រើសរើសរូបថត -> ធ្វើការបង្រួមទំហំ រួចទើប Save
+    if (photoFile) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.src = e.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                const MAX_WIDTH = 200; // កំណត់ទទឹងរូបត្រឹម 200px
+                const scaleSize = MAX_WIDTH / img.width;
+                canvas.width = MAX_WIDTH;
+                canvas.height = img.height * scaleSize;
+                
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                const compressedPhoto = canvas.toDataURL('image/jpeg', 0.7);
+                finalize(compressedPhoto);
+            };
+        };
+        reader.readAsDataURL(photoFile);
+    } else {
+        // បើមិនបានដាក់រូបថតទេ -> រំលងការបង្រួមរូប រួច Save យកតែម្តង
+        finalize(null);
+    }
+}
+
+        function renderIDCards() {
+            const container = document.getElementById('idCardContainer');
+            container.innerHTML = ""; 
+            students.forEach((s, index) => {
+                const div = document.createElement('div');
+                div.className = 'student-card';
+                div.innerHTML = `
+                    <div class="card-header">STUDENT IDENTITY CARD</div>
+                    <div class="card-actions no-print">
+                        <button class="btn-mini" style="background:var(--primary)" onclick="handleEdit(${index})"><i class="fas fa-edit"></i></button>
+                        <button class="btn-mini" style="background:var(--danger)" onclick="handleDelete(${index})"><i class="fas fa-trash"></i></button>
+                    </div>
+                    <div class="card-body">
+                        <div class="photo-area">
+                            <div class="photo-placeholder">
+                                ${s.photo ? `<img src="${s.photo}">` : '<i class="fas fa-user fa-2x"></i>'}
+                            </div>
+                            <p style="font-size:9px; font-weight:bold; margin-top:5px; color:var(--primary)">ID: ${s.id}</p>
+                        </div>
+                        <div class="info-area">
+                            <h4>${s.name}</h4>
+                            <p>ឆ្នាំសិក្សា: <b>2025-2026</b></p>
+                            <p>ស្ថានភាព: <b>សកម្ម</b></p>
+                            <div class="qr-right"><div id="qr-${s.id}"></div></div>
+                        </div>
+                    </div>
+                    <div class="card-footer"></div>
+                `;
+                container.appendChild(div);
+                new QRCode(document.getElementById(`qr-${s.id}`), { text: s.id, width: 75, height: 75 });
+            });
+        }
+
+        async function handleEdit(index) {
+            if (await checkAdmin()) {
+                const s = students[index];
+                document.getElementById('stdID').value = s.id;
+                document.getElementById('stdName').value = s.name;
+                document.getElementById('editIndex').value = index;
+                document.getElementById('btnSave').innerText = "កែប្រែទិន្នន័យ";
+                Swal.fire('Admin Verify', 'អ្នកអាចកែសម្រួលបានហើយ', 'success');
+            }
+        }
+
+        async function handleDelete(index) {
+            if (await checkAdmin()) {
+                Swal.fire({
+                    title: 'លុបកាតសិស្សនេះ?',
+                    text: "ទិន្នន័យនឹងត្រូវបាត់បង់ជារៀងរហូត!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'យល់ព្រមលុប',
+                    cancelButtonText: 'បោះបង់'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        students.splice(index, 1);
+                        localStorage.setItem('sys_students', JSON.stringify(students));
+                        renderIDCards();
+                        Swal.fire('លុបរួចរាល់!', 'កាតសិស្សត្រូវបានលុប។', 'success');
+                    }
+                });
+            }
+        }
+
+        function toggleCamera() {
+            if (html5QrCode.isScanning) {
+                html5QrCode.stop().then(() => { document.getElementById('btnCam').innerHTML = '<i class="fas fa-camera"></i> បើកកាមេរ៉ា'; });
+            } else {
+                html5QrCode.start({ facingMode: "environment" }, { fps: 20, qrbox: 250 }, (id) => handleScan(id));
+                document.getElementById('btnCam').innerHTML = '<i class="fas fa-stop"></i> បិទកាមេរ៉ា';
+            }
+        }
+
+        function handleScan(scannedID) {
+            const std = students.find(s => s.id === scannedID);
+            if(!std) return; 
+            document.getElementById('beep').play();
+            const today = new Date().toLocaleDateString('km-KH');
+            let record = logs.find(l => l.id === scannedID && l.date === today);
+            if(!record) {
+                logs.push({ id: scannedID, name: std.name, date: today, timeIn: new Date().toLocaleTimeString('km-KH'), timeOut: null });
+                Swal.fire({ title: 'ចូលរៀន', text: std.name, icon: 'success', timer: 800, showConfirmButton: false });
+            } else if(!record.timeOut) {
+                record.timeOut = new Date().toLocaleTimeString('km-KH');
+                Swal.fire({ title: 'ចេញទៅផ្ទះ', text: std.name, icon: 'info', timer: 800, showConfirmButton: false });
+            }
+            localStorage.setItem('sys_logs', JSON.stringify(logs));
+            updateUI();
+        }
+
+        function updateUI() {
+            const today = new Date().toLocaleDateString('km-KH');
+            document.getElementById('todayCount').innerText = logs.filter(l => l.date === today).length;
+            document.querySelector('#reportTable tbody').innerHTML = logs.map(l => `
+                <tr><td>${l.date}</td><td>${l.id}</td><td>${l.name}</td><td>${l.timeIn}</td><td>${l.timeOut || '-'}</td></tr>
+            `).reverse().join('');
+        }
+
+        function switchTab(id, btn) {
+            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).style.display = 'block';
+            if(btn) btn.classList.add('active');
+        }
+
+        function clearInput() {
+            document.getElementById('stdID').value = ''; document.getElementById('stdName').value = ''; document.getElementById('stdPhoto').value = '';
+        }
+
+        function exportToExcel() {
+            const ws = XLSX.utils.json_to_sheet(logs);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Attendance");
+            XLSX.writeFile(wb, "Attendance_Report.xlsx");
+        }
+
+        setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString('km-KH', {hour12: false}); }, 1000);
+    </script>
+</body>
+</html>

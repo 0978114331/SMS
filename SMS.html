@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="km">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="shorcut icon" href="Img/KC.png" type="image/x-icon">
+        <title> School MS</title>
+        <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@300;400;700&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="https://unpkg.com/html5-qrcode"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+        <script src="https://unpkg.com/html5-qrcode"></script>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+        
+        <style>
+            :root {
+                --primary: #0984e3; --secondary: #6c5ce7; --dark: #2d3436;
+                --success: #00b894; --danger: #d63031; --warning: #f1c40f;
+                --light: #f0f2f5;
+            }
+
+            * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Kantumruy Pro', sans-serif; }
+            body { background: var(--light); padding-top: 80px; color: var(--dark); }
+
+            /* --- Auth Styling --- */
+            #authOverlay {
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: linear-gradient(135deg, #2c3e50, #0984e3);
+                z-index: 9999; display: flex; align-items: center; justify-content: center;
+            }
+            .auth-card {
+                background: white; padding: 30px; border-radius: 15px;
+                width: 90%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+                text-align: center;
+            }
+            .pass-container { position: relative; width: 100%; }
+            .toggle-pass { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #666; }
+            .auth-tabs { display: flex; margin-bottom: 20px; border-bottom: 2px solid #eee; }
+            .auth-tab { flex: 1; padding: 10px; cursor: pointer; font-weight: bold; color: #777; }
+            .auth-tab.active { color: var(--primary); border-bottom: 3px solid var(--primary); }
+            .hidden { display: none !important; }
+
+            /* --- Navigation --- */
+            nav {
+                background: #2c3e50; padding: 10px 3%;
+                display: flex; justify-content: space-between; align-items: center;
+                position: fixed; top: 0; width: 100%; z-index: 2000; box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            }
+
+            .nav-right { display: flex; align-items: center; gap: 15px; }
+            .nav-buttons { display: flex; gap: 8px; }
+
+            /* Dropdown Styling */
+            .dropdown { position: relative; display: inline-block; }
+            .dropdown-content {
+                display: none; position: absolute; background-color: white;
+                min-width: 220px; box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
+                z-index: 3000; border-radius: 8px; overflow: hidden; top: 100%; right: 0;
+            }
+            .dropdown-content a {
+                color: #2d3436; padding: 12px 16px; text-decoration: none;
+                display: block; font-size: 0.85rem; border-bottom: 1px solid #eee;
+            }
+            .dropdown-content a:hover { background-color: #f1f1f1; color: var(--primary); }
+            .dropdown:hover .dropdown-content { display: block; }
+
+            .user-profile {
+                background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 50px;
+                color: white; display: flex; align-items: center; gap: 10px; border: 1px solid rgba(255,255,255,0.2);
+            }
+            .role-badge { background: var(--warning); color: #000; font-size: 0.6rem; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; }
+
+            /* --- UI Elements --- */
+            .container { max-width: 1200px; margin: auto; padding: 15px; }
+            .card { background: white; border-radius: 12px; padding: 18px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 15px; }
+            .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+            @media (max-width: 900px) { .main-grid { grid-template-columns: 1fr; } }
+
+            .clock-card { text-align: center; background: linear-gradient(135deg, #0984e3, #6c5ce7); color: white; border-radius: 10px; padding: 15px; flex: 1; }
+            #clock { font-size: 2.2rem; font-weight: bold; }
+            
+            input, select { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 8px; outline: none; }
+            .btn { padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; font-size: 0.85rem; }
+            .btn-primary { background: var(--primary); color: white; }
+            .btn-success { background: var(--success); color: white; }
+            .btn-danger { background: var(--danger); color: white; }
+            .btn-warning { background: var(--warning); color: #000; }
+            .btn-home { background: #74b9ff; color: white; }
+
+            .stat-box { padding: 15px; border-radius: 10px; color: white; text-align: center; flex: 1; }
+            
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+            th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; font-size: 0.85rem; }
+            th { background: #f8f9fa; position: sticky; top: 0; font-weight: bold; color: var(--dark); }
+
+            .tab-content { display: none; }
+            .tab-content.active { display: block; }
+            .admin-only { display: none; }
+            .scroll-table { overflow-x: auto; max-height: 500px; border-radius: 8px; border: 1px solid #eee; }
+            .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; color: white; }
+            .rank-1 { background: #fff9c4; font-weight: bold; color: #fbc02d; }
+
+            
+            .time-col { 
+                white-space: nowrap; 
+                background: #43f0ed; 
+                font-weight: bold; 
+            }
+
+            .sch-input {
+                width: 100%;
+                height: 60px; 
+                border: 1.5px solid #7f8e3c; 
+                border-radius: 4px;
+                padding: 5px;
+                text-align: center;
+                font-size: 0.8rem;
+                resize: none; 
+                display: block;
+                font-family: 'Kantumruy Pro', sans-serif;
+            }
+
+            .sch-input:focus {
+                border-color: var(--primary);
+                outline: none;
+                background-color: #2f67a0;
+            }
+
+
+            .btn-animate {
+                transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                position: relative;
+                overflow: hidden;
+            }
+            .btn-animate:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            }
+            .btn-animate:active {
+                transform: scale(0.95);
+            }
+            /*  (Wobble) */
+            @keyframes pulse-animation {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.05); }
+                100% { transform: scale(1); }
+            }
+            .btn-pulse {
+                animation: pulse-animation 2s infinite;
+        }
+        </style>
+    </head>
+    <body>
+
+        <!-- Auth Overlay -->
+        <div id="authOverlay">
+            <div class="auth-card">
+                <h2 style="margin-bottom: 15px; color: var(--primary);">ប្រព័ន្ធគ្រប់គ្រងសាលា</h2>
+                <div class="auth-tabs">
+                    <div class="auth-tab active" id="tabLog" onclick="switchAuthMode('login')">ចូលប្រព័ន្ធ</div>
+                    <div class="auth-tab" id="tabReg" onclick="switchAuthMode('register')">ចុះឈ្មោះថ្មី</div>
+                </div>
+                <div id="loginForm">
+                    <input type="text" id="logUser" placeholder="ឈ្មោះអ្នកប្រើប្រាស់">
+                    <div class="pass-container">
+                        <input type="password" id="logPass" placeholder="លេខសម្ងាត់">
+                        <i class="fas fa-eye toggle-pass" onclick="togglePass('logPass')"></i>
+                    </div>
+                    <button class="btn btn-primary" style="width:100%; justify-content: center; margin-top:15px;" onclick="handleLogin()">ចូលប្រព័ន្ធ</button>
+                </div>
+                 <div id="regForm" class="hidden">
+                    <input type="text" id="regUser" placeholder="បង្កើតឈ្មោះអ្នកប្រើ">
+                    <div class="pass-container">
+                        <input type="password" id="regPass" placeholder="បង្កើតលេខសម្ងាត់">
+                        <i class="fas fa-eye toggle-pass" onclick="togglePass('regPass')"></i>
+                    </div>
+                    <select id="regRole" onchange="toggleAdminCodeField()">
+                        <option value="user">អ្នកប្រើប្រាស់ធម្មតា (User)</option>
+                        <option value="admin">អ្នកគ្រប់គ្រង (Admin)</option>
+                    </select>
+                    <div id="adminCodeDiv" class="hidden">
+                        <input type="password" id="adminCodeIn" placeholder="លេខកូដសម្ងាត់ Admin">
+                    </div>
+                    <button class="btn btn-success" style="width:100%; justify-content: center; margin-top:15px;" onclick="handleRegister()">ចុះឈ្មោះ</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav>
+            <div style="display: flex; align-items: center; gap: 10px; color: white;">
+                <img src="https://scontent.fpnh12-1.fna.fbcdn.net/v/..." id="logoNav" style="width:60px; height:60px; border-radius:50%; background:white; object-fit: cover;">
+                <b style="font-size: 1.rem;">ពុទ្ធិកសាកលវិទ្យាល័យព្រះសីហមុនីរាជា</b>
+            </div>
+
+            <div class="nav-right">
+                <div class="nav-buttons">
+                    <button onclick="switchTab('attendance')" class="btn btn-primary"><i class="fas fa-user-check"></i> វត្តមាន</button>
+                    <button onclick="switchTab('scores_tab')" class="btn btn-warning"><i class="fas fa-star"></i> ពិន្ទុ</button>
+
+                   <div class="dropdown">
+                    <button class="btn btn-success"><i class="fas fa-chart-line"></i> វិភាគ <i class="fas fa-caret-down"></i></button>
+                    <div class="dropdown-content">
+                        <a href="#" onclick="updateAnalytics('attendance')"><i class="fas fa-user-check"></i> វិភាគវត្តមានសិស្ស</a>
+                        <a href="#" onclick="updateAnalytics('scores')"><i class="fas fa-star"></i> វិភាគពិន្ទុ</a>
+                        <a href="#" onclick="updateAnalytics('students')"><i class="fas fa-users"></i> ស្ថិតិសិស្សសរុប</a>
+                    </div>
+                </div>
+                    
+                    <div class="dropdown">
+                        <button class="btn btn-primary" style="background:#2d3436;">
+                            <i class="fas fa-database"></i> ឃ្លាំងទិន្នន័យ <i class="fas fa-caret-down"></i>
+                        </button>
+                        <div class="dropdown-content">
+                            <a href="#" onclick="switchTab('warehouse_att')"><i class="fas fa-clipboard-list"></i> ទិន្នន័យវត្តមាន</a>
+                            <a href="#" onclick="switchTab('warehouse_score')"><i class="fas fa-graduation-cap"></i> លទ្ធផលពិន្ទុ</a>
+                            <a href="#" onclick="switchTab('schedule_tab')"><i class="fas fa-calendar-alt"></i> កាលវិភាគរៀន</a>
+                            <a href="#" onclick="switchTab('student_master_tab')"><i class="fas fa-users"></i> បញ្ជីឈ្មោះសិស្ស</a>
+                        </div>
+                    </div>
+                </div>
+
+                <a href="Card.html" style="text-decoration: none;"><button class="btn" style="background: var(--dark); color: white; cursor: pointer;"><i class="fas fa-id-card"></i> បង្កើតកាត</button></a>
+                <!-- ប៊ូតុងថ្មីសម្រាប់បើកកាមេរ៉ា -->
+                <button onclick="openScanner()" class="btn" style="background:#6c5ce7; color:white;"><i class="fas fa-qrcode"></i> ស្កែនវត្តមាន</button>                    
+
+                <div class="user-profile">
+                    <div style="text-align: right;">
+                        <div id="displayUserName" style="font-size: 0.7rem; font-weight: bold;">KH-CH</div>
+                        <span id="displayUserRole" class="role-badge">admin</span>
+                    </div>
+                    <i class="fas fa-power-off" onclick="logout()" style="cursor:pointer; color: #ff7675;"></i>
+                </div>
+            </div>
+        
+        
+            <!-- (Modal Popup) -->
+            <div id="scannerModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center; flex-direction:column;">
+                <div id="reader" style="width: 400px; background:white; border-radius:10px; overflow:hidden;"></div>
+                <button onclick="closeScanner()" class="btn btn-danger" style="margin-top:20px;">បិទកាមេរ៉ា</button>
+            </div>
+        </nav>
+
+        <div class="container">
+            <!-- Top Stats -->
+            <div class="main-grid" style="grid-template-columns: 1fr 2fr;">
+                <div class="clock-card">
+                    <div id="clock">00:00:00</div>
+                    <div id="dayDisplay" style="font-size:0.8rem;">---</div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <div class="stat-box" style="background: var(--success);"><h6>វត្តមាន</h6><h2 id="pCount">0</h2></div>
+                    <div class="stat-box" style="background: var(--warning);"><h6>ច្បាប់</h6><h2 id="lCount">0</h2></div>
+                    <div class="stat-box" style="background: var(--danger);"><h6>អវត្តមាន</h6><h2 id="aCount">0</h2></div>
+                </div>
+            </div>
+
+            <!-- Info Config -->
+            <div class="card" style="margin-top: 15px;">
+                <div class="main-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));">
+                    <input type="text" id="teacherIn" placeholder="ឈ្មោះគ្រូ..." onkeyup="syncInfo()">
+                    <input type="text" id="roomIn" placeholder="បន្ទប់..." onkeyup="syncInfo()">
+                    <input type="text" id="subjectIn" placeholder="មុខវិជ្ជា..." onkeyup="syncInfo()">
+                    <select id="shiftIn" onchange="syncInfo()">
+                        <option value="វេនព្រឹក">វេនព្រឹក</option>
+                        <option value="វេនរសៀល">វេនរសៀល</option>
+                        <option value="វេនយប់">វេនយប់</option>
+                    </select>
+                    <input type="text" id="logoUrlIn" placeholder="Link Logo..." onkeyup="syncInfo()">
+                </div>
+            </div>
+
+            <!-- TAB: ATTENDANCE -->
+            <div id="attendance" class="tab-content active">
+                <div class="main-grid">
+                    <div class="card">
+                        <h3><i class="fas fa-plus-circle"></i> ចុះវត្តមាន</h3>
+                        <p style="font-size: 0.75rem; color: #666; margin-bottom: 5px;">* បញ្ចូលឈ្មោះ ឬទាញពីបញ្ជីឈ្មោះសិស្ស</p>
+                        <input type="text" id="stuName" placeholder="ឈ្មោះសិស្ស...">
+                        <select id="stuGender">
+                            <option value="ប្រុស">ប្រុស</option>
+                            <option value="ស្រី">ស្រី</option>
+                        </select>
+                        <select id="stuStatus">
+                            <option value="វត្តមាន">វត្តមាន</option>
+                            <option value="ច្បាប់">ច្បាប់</option>
+                            <option value="អវត្តមាន">អវត្តមាន</option>
+                        </select>
+                        <button class="btn btn-success" style="width:100%; margin-top:10px; justify-content:center;" onclick="addAttendance()">រក្សាទុក</button>
+                    </div>
+
+                   <div id="exportArea" style="background: white; padding: 20px; border-radius: 10px; border: 5px solid #ddd; font-family: 'Kantumruy Pro', sans-serif; width: 100%; max-width: 1700px; margin: 15px auto; box-shadow: 0 3px 5px rgba(0,0,0,0.05);">
+                        <div style="text-align: center; margin-bottom: 30px; border-bottom: 3px double #1a73e8; padding-bottom: 20px;">
+                            <img id="logoExport" src="" style="width: 100px; margin-bottom: 15px; display: none; margin: 0 auto;">
+                            <h1 style="color: #1a73e8; margin: 5px 0; font-size: 2rem;">របាយការណ៍វត្តមានសិស្សប្រចាំថ្ងៃ</h1>
+                            <p style="font-size: 1.1rem; color: #555;">ប្រព័ន្ធគ្រប់គ្រងវត្តមានស្វ័យប្រវត្តិ</p>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 25px; padding: 20px; background: #f8f9fa; border-radius: 10px; font-size: 1.1rem; border: 1px solid #eee;">
+                            <div style="line-height: 2; text-align: left;">
+                                <div><strong>គ្រូបង្រៀន៖</strong> <span id="h_teacher">--</span></div>
+                                <div><strong>មុខវិជ្ជា៖</strong> <span id="h_subject">--</span></div>
+                                <div><strong>ម៉ោងសិក្សា៖</strong> <span id="h_time">7:30 - 11:00</span></div>
+                            </div>
+                            <div style="line-height: 2; text-align: right;">
+                                <div><strong>បន្ទប់សិក្សា៖</strong> <span id="h_room">--</span></div>
+                                <div><strong>វេនសិក្សា៖</strong> <span id="h_shift" style="color: #e67e22; font-weight: bold;">--</span></div>
+                                <div><strong>កាលបរិច្ឆេទ៖</strong> <span id="repDate">--</span></div>
+                            </div>
+                        </div>
+
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 1.1rem;">
+                            <thead>
+                                <tr style="background: #1a73e8; color: white;">
+                                    <th style="padding: 15px; text-align: left; border: 1px solid #ddd;">ឈ្មោះសិស្ស</th>
+                                    <th style="padding: 15px; text-align: center; border: 1px solid #ddd; width: 15%;">ភេទ</th>
+                                    <th style="padding: 15px; text-align: center; border: 1px solid #ddd; width: 25%;">ស្ថានភាព</th>
+                                    <th class="no-print" style="padding: 15px; text-align: center; border: 1px solid #ddd; width: 15%;">សកម្មភាព</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attTable"></tbody>
+                        </table>
+
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 30px; padding-top: 20px; border-top: 2px solid #1a73e8; text-align: center; font-size: 1.2rem; font-weight: bold;">
+                            <div style="padding: 8px; background: #e3f2fd; border-radius: 6px; color: #1565c0;">សិស្សសរុប: <span id="sumTotal">0</span></div>
+                            <div style="padding: 8px; background: #e8f5e9; border-radius: 6px; color: #2e7d32;">វត្តមាន: <span id="sumPresent">0</span></div>
+                            <div style="padding: 8px; background: #fff3e0; border-radius: 6px; color: #ef6c00;">ច្បាប់: <span id="sumLeave">0</span></div>
+                            <div style="padding: 8px; background: #ffe6e6; border-radius: 6px; color: #c62828;">អវត្តមាន: <span id="sumAbsent">0</span></div>
+                        </div>
+                    </div>
+                    <div style="max-width: 700px; margin: 15px auto;">
+                        <div style="display: flex; gap: 10px; align-items: center; background: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
+                            <label style="margin: 0; font-weight: bold;">បញ្ចូលចំនួនសិស្សសរុប៖</label>
+                            <input type="number" id="manualTotalInput" value="0" oninput="updateManualTotal()" style="width: 80px; padding: 5px; text-align: center; border: 1px solid #ccc; border-radius: 4px;">
+                        </div>
+                        
+                        <button class="btn btn-info" onclick="downloadForTelegram()"><i class="fas fa-file-pdf"></i> ទាញយកសម្រាប់ Telegram</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: SCORES -->
+            <div id="scores_tab" class="tab-content">
+                <div class="card">
+                    <h3><i class="fas fa-edit"></i> បញ្ចូលពិន្ទុ</h3>
+                    <div class="scroll-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ឈ្មោះសិស្ស</th>
+                                    <th>C++</th>
+                                    <th>C#</th>
+                                    <th>Web</th>
+                                    <th>Database</th>
+                                    <th>មធ្យមភាគ</th>
+                                    <th class="no-print">រក្សាទុក</th>
+                                </tr>
+                            </thead>
+                            <tbody id="scoreTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: ANALYTICS -->
+            <div id="analytics" class="tab-content">
+                <div class="main-grid">
+                    <div class="card"><h3>វិភាគវត្តមាន</h3><canvas id="pieChart"></canvas></div>
+                    <div class="card"><h3>ប្រៀបធៀបទិន្នន័យ</h3><canvas id="barChart"></canvas></div>
+                </div>
+            </div>
+
+            <!-- TAB: WAREHOUSE ATTENDANCE -->
+            <div id="warehouse_att" class="tab-content">
+                <div class="card">
+                    <h3><i class="fas fa-clipboard-list"></i> ឃ្លាំងទិន្នន័យវត្តមាន</h3>
+                    <div class="filter-area" style="margin-bottom: 15px; display: flex; gap: 10px;">
+                        <input type="date" id="filterDate" class="form-control" onchange="renderAll()">
+                        <button class="btn btn-primary" onclick="document.getElementById('filterDate').value=''; renderAll();">ទាំងអស់</button>
+                        
+                    </div>
+                    <div class="scroll-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>កាលបរិច្ឆេទ (ID)</th>
+                                    <th>ឈ្មោះសិស្ស</th>
+                                    <th>ភេទ</th>
+                                    <th>ស្ថានភាពវត្តមាន</th>
+                                    <th class="admin-only">សកម្មភាព</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attWarehouseTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: WAREHOUSE SCORES (Updated with Ranking) -->
+            <div id="warehouse_score" class="tab-content">
+                <div class="card">
+                    <h3 style="text-align:center; color: var(--secondary); margin-bottom: 20px;">
+                        <i class="fas fa-trophy"></i> តារាងចំណាត់ថ្នាក់ និងនិទ្ទេសសរុប
+                    </h3>
+                    <div class="scroll-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ចំណាត់ថ្នាក់</th>
+                                    <th>ឈ្មោះសិស្ស</th>
+                                    <th>មធ្យមភាគ</th>
+                                    <th>និទ្ទេស</th>
+                                    <th>លទ្ធផល</th>
+                                </tr>
+                            </thead>
+                            <tbody id="scoreWarehouseTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: SCHEDULE (New) -->
+            <div id="schedule_tab" class="tab-content">
+                <div class="card">
+                    <h3><i class="fas fa-calendar-alt"></i> រៀបចំកាលវិភាគសិក្សា (ច័ន្ទ - សុក្រ)</h3>
+                    <div class="scroll-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ម៉ោង / ថ្ងៃ</th>
+                                    <th>ច័ន្ទ</th>
+                                    <th>អង្គារ</th>
+                                    <th>ពុធ</th>
+                                    <th>ព្រហស្បតិ៍</th>
+                                    <th>សុក្រ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="scheduleBody"></tbody>
+                        </table>
+                    </div>
+                    <button class="btn btn-success" style="margin-top:15px;" onclick="saveSchedule()">
+                        <i class="fas fa-save"></i> រក្សាទុកកាលវិភាគ
+                    </button>
+                </div>
+            </div>
+
+            <!-- TAB: STUDENT MASTER LIST (Excel Style) -->
+            <div id="student_master_tab" class="tab-content">
+                <div class="card">
+                    <h3><i class="fas fa-file-excel"></i> គ្រប់គ្រងបញ្ជីឈ្មោះសិស្សសរុប (Master List)</h3>
+                    <p style="color: #666; font-size: 0.8rem; margin-bottom: 15px;">* បញ្ចូលព័ត៌មានលម្អិតរបស់សិស្សខាងក្រោម</p>
+                    
+                    <!-- ជួរទី១: ID, ឈ្មោះ, ភេទ -->
+                    <div class="main-grid" style="grid-template-columns: 1fr 2fr 1fr; gap: 10px; margin-bottom: 10px;">
+                        <input type="text" id="mStuID" placeholder="លេខសម្គាល់ ID...">
+                        <input type="text" id="mStuName" placeholder="គោត្តនាម-នាម...">
+                        <select id="mStuGender"><option>ប្រុស</option><option>ស្រី</option></select>
+                    </div>
+
+                    <!-- ជួរទី២: ថ្ងៃកំណើត, ទីកន្លែងកំណើត, ផ្សេងៗ -->
+                    <div class="main-grid" style="grid-template-columns: 1fr 2fr 1fr; gap: 10px;">
+                        <input type="date" id="mStuDOB" title="ថ្ងៃខែឆ្នាំកំណើត">
+                        <input type="text" id="mStuPOB" placeholder="មកពីរាជធានី/ខេត្ត...">
+                        <input type="text" id="mStuNote" placeholder="ផ្សេងៗ...">
+                    </div>
+
+                    <button class="btn btn-primary" style="width: 100%; margin-top: 15px; justify-content: center;" onclick="addMasterStudent()">
+                        <i class="fas fa-plus"></i> បន្ថែមឈ្មោះសិស្សទៅក្នុងបញ្ជី
+                    </button>
+
+                    <div class="scroll-table" style="margin-top: 20px;">
+                        <table style="min-width: 900px;">
+                            <thead>
+                                <tr>
+                                    <th>ល.រ</th>
+                                    <th>អត្តលេខ (ID)</th>
+                                    <th>គោត្តនាម-នាម</th>
+                                    <th>ភេទ</th>
+                                    <th>ថ្ងៃខែឆ្នាំកំណើត</th>
+                                    <th>មកពីរាជធានី/ខេត្ត</th>
+                                    <th>ផ្សេងៗ</th>
+                                    <th>សកម្មភាព</th>
+                                </tr>
+                            </thead>
+                            <tbody id="masterStudentTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <div id="scanSuccess" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #00b894; color: white; padding: 20px 40px; border-radius: 10px; font-size: 20px; z-index: 9999; text-align: center; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+            <i class="fas fa-check-circle" style="font-size: 40px; margin-bottom: 10px;"></i><br>Success!
+        </div>
+
+    <script>
+            const ADMIN_SECRET = "KHOUVCHVEA-09781";
+            let pieChart, barChart;
+            let html5QrCode;
+            let lastScannedID = "";
+
+            window.onload = function() {
+                checkAutoLogin();
+                startClock();
+            }
+
+            function togglePass(id) { const el = document.getElementById(id); el.type = el.type === 'password' ? 'text' : 'password'; }
+            function switchAuthMode(mode) {
+                document.getElementById('loginForm').classList.toggle('hidden', mode === 'register');
+                document.getElementById('regForm').classList.toggle('hidden', mode === 'login');
+                document.getElementById('tabLog').classList.toggle('active', mode === 'login');
+                document.getElementById('tabReg').classList.toggle('active', mode === 'register');
+            }
+            function toggleAdminCodeField() { document.getElementById('adminCodeDiv').classList.toggle('hidden', document.getElementById('regRole').value !== 'admin'); }
+            
+            function handleRegister() {
+                const user = document.getElementById('regUser').value.trim();
+                const pass = document.getElementById('regPass').value.trim();
+                const role = document.getElementById('regRole').value;
+                const code = document.getElementById('adminCodeIn').value;
+                if(!user || !pass) return alert("Please fill all fields!");
+                if(role === 'admin' && code !== ADMIN_SECRET) return alert("Invalid Admin Code!");
+                let accs = JSON.parse(localStorage.getItem('sys_users')) || [];
+                if(accs.find(a => a.user === user)) return alert("Username already exists!");
+                accs.push({user, pass, role});
+                localStorage.setItem('sys_users', JSON.stringify(accs));
+                alert("Registration successful!"); switchAuthMode('login');
+            }
+
+            function handleLogin() {
+                const user = document.getElementById('logUser').value.trim();
+                const pass = document.getElementById('logPass').value.trim();
+                let accs = JSON.parse(localStorage.getItem('sys_users')) || [];
+                const found = accs.find(a => a.user === user && a.pass === pass);
+                if(found) { localStorage.setItem('sys_logged_in', JSON.stringify(found)); loginUI(found); } 
+                else alert("Invalid username or password!");
+            }
+
+            function checkAutoLogin() {
+                const saved = JSON.parse(localStorage.getItem('sys_logged_in'));
+                if(saved) loginUI(saved);
+            }
+
+            function loginUI(user) {
+                document.getElementById('authOverlay').style.display = 'none';
+                document.getElementById('displayUserName').innerText = user.user;
+                document.getElementById('displayUserRole').innerText = user.role;
+                window.currentUserRole = user.role;
+                if(user.role === 'admin') document.querySelectorAll('.admin-only').forEach(e => e.style.display = 'inline-flex');
+                init();
+            }
+
+            function logout() { localStorage.removeItem('sys_logged_in'); location.reload(); }
+
+            function startClock() {
+                setInterval(() => {
+                    const n = new Date();
+                    document.getElementById('clock').innerText = n.toLocaleTimeString('km-KH', {hour12:false});
+                    document.getElementById('dayDisplay').innerText = n.toLocaleDateString('km-KH', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+                }, 1000);
+            }
+
+            function syncInfo() {
+                const t = document.getElementById('teacherIn').value;
+                const r = document.getElementById('roomIn').value;
+                const s = document.getElementById('subjectIn').value;
+                const sh = document.getElementById('shiftIn').value;
+                const l = document.getElementById('logoUrlIn').value;
+                document.getElementById('h_teacher').innerText = t || "--";
+                document.getElementById('h_room').innerText = r || "--";
+                document.getElementById('h_subject').innerText = "មុខវិជ្ជា៖ " + (s || "--");
+                document.getElementById('h_shift').innerText = sh;
+                if(l) { document.getElementById('logoNav').src = l; document.getElementById('logoExport').src = l; document.getElementById('logoExport').style.display = 'block'; }
+                localStorage.setItem('sys_config', JSON.stringify({t, r, s, sh, l}));
+            }
+
+            function init() {
+                const conf = JSON.parse(localStorage.getItem('sys_config'));
+                if(conf) {
+                    document.getElementById('teacherIn').value = conf.t || '';
+                    document.getElementById('roomIn').value = conf.r || '';
+                    document.getElementById('subjectIn').value = conf.s || '';
+                    document.getElementById('shiftIn').value = conf.sh || 'វេនព្រឹក';
+                    document.getElementById('logoUrlIn').value = conf.l || '';
+                    syncInfo();
+                }
+                renderAll();
+                initCharts();
+            }
+
+            function addMasterStudent() {
+                const idNum = document.getElementById('mStuID').value.trim();
+                const name = document.getElementById('mStuName').value.trim();
+                const gender = document.getElementById('mStuGender').value;
+                const dob = document.getElementById('mStuDOB').value;
+                const pob = document.getElementById('mStuPOB').value.trim();
+                const note = document.getElementById('mStuNote').value.trim();
+
+                if(!idNum || !name) return alert("Please fill ID and Name!");
+
+                let master = JSON.parse(localStorage.getItem('sys_master_students')) || [];
+                
+                master.push({
+                    id: Date.now(), 
+                    stuID: idNum,
+                    name: name, 
+                    gender: gender,
+                    dob: dob,
+                    pob: pob,
+                    note: note
+                });
+
+                localStorage.setItem('sys_master_students', JSON.stringify(master));
+                document.getElementById('mStuID').value = "";
+                document.getElementById('mStuName').value = "";
+                document.getElementById('mStuPOB').value = "";
+                document.getElementById('mStuNote').value = "";
+                renderAll();
+            }
+
+            function addAttendance() {
+                const name = document.getElementById('stuName').value;
+                const gender = document.getElementById('stuGender').value;
+                const status = document.getElementById('stuStatus').value;
+                if(!name) return alert("សូមបញ្ចូលឈ្មោះសិស្ស!");
+
+                const now = new Date();
+                let list = JSON.parse(localStorage.getItem('sys_data')) || [];
+                
+                list.push({
+                    id: Date.now(), 
+                    name, 
+                    gender, 
+                    status, 
+                    //  date and time  renderAttendance
+                    date: now.toLocaleDateString('km-KH'),
+                    time: now.toLocaleTimeString('km-KH', { hour: '2-digit', minute: '2-digit' }),
+                    scores: {cpp:0, cs:0, web:0, db:0}
+                });
+
+                localStorage.setItem('sys_data', JSON.stringify(list));
+                document.getElementById('stuName').value = "";
+                alert("ចុះឈ្មោះជោគជ័យ!");
+                renderAll();
+            }
+
+            function renderAll() {
+                const list = JSON.parse(localStorage.getItem('sys_data')) || [];
+                const master = JSON.parse(localStorage.getItem('sys_master_students')) || [];
+                const schedule = JSON.parse(localStorage.getItem('sys_schedule')) || {};
+
+                renderAttendance(list);
+                renderScoreTable(master); 
+                renderWarehouse(list);
+                renderMasterTable(master);
+                renderSchedule(schedule);
+                updateStats(list);
+            }
+
+            function renderMasterTable(master) {
+                const body = document.getElementById('masterStudentTable');
+                if (!body) return;
+
+                body.innerHTML = master.map((s, idx) => {
+
+                    let actions = "";
+                    if (window.currentUserRole === 'admin') {
+                        actions = `
+                            <i class="fas fa-edit" onclick="editMaster(${s.id})" 
+                                style="color: var(--primary); cursor:pointer; margin-right: 12px;"></i>
+                            <i class="fas fa-trash-alt" onclick="deleteMaster(${s.id})" 
+                                style="color: var(--danger); cursor:pointer"></i>
+                        `;
+                    } else {
+                        actions = `<i class="fas fa-lock" style="color: #ccc;" title="Admin Only"></i>`;
+                    }
+                    return `
+                        <tr>
+                            <td>${idx + 1}</td>
+                            <td style="font-weight: bold; color: var(--primary);">${s.stuID || '---'}</td>
+                            <td style="text-align: left; padding-left: 15px;">${s.name}</td>
+                            <td>${s.gender}</td>
+                            <td>${s.dob || '---'}</td>
+                            <td style="font-size: 0.75rem;">${s.pob || '---'}</td>
+                            <td style="font-style: italic; color: #666;">${s.note || ''}</td>
+                            <td>${actions}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            function editMaster(id) {
+                if (window.currentUserRole !== 'admin') {
+                    alert("សុំទោស! អ្នកមិនមានសិទ្ធិកែប្រែទិន្នន័យមេឡើយ។");
+                    return;
+                }
+
+                let master = JSON.parse(localStorage.getItem('sys_master_students')) || [];
+                const student = master.find(s => s.id === id);
+
+                if (student) {
+                    document.getElementById('mStuID').value = student.stuID || "";
+                    document.getElementById('mStuName').value = student.name;
+                    document.getElementById('mStuGender').value = student.gender;
+                    document.getElementById('mStuDOB').value = student.dob || "";
+                    document.getElementById('mStuPOB').value = student.pob || "";
+                    document.getElementById('mStuNote').value = student.note || "";
+
+                    deleteMaster(id); 
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            }
+
+            function deleteMaster(id) {
+                if (window.currentUserRole !== 'admin') {
+                    alert("សុំទោស! អ្នកមិនមានសិទ្ធិលុបទិន្នន័យមេឡើយ។");
+                    return;
+                }
+
+                let master = JSON.parse(localStorage.getItem('sys_master_students')) || [];
+                localStorage.setItem('sys_master_students', JSON.stringify(master.filter(x => x.id !== id)));
+                renderAll();
+            }
+            let currentPage = 1;
+            const rowsPerPage = 15; // បង្ហាញ ១៥ នាក់ក្នុងមួយទំព័រ
+
+            function renderAttendance(list) {
+                const body = document.getElementById('attTable');
+                if (!body) return;
+
+                // ១. ចាប់យកថ្ងៃបច្ចុប្បន្ន
+                const today = new Date().toLocaleDateString('km-KH');
+                if (document.getElementById('repDate')) document.getElementById('repDate').innerText = today;
+
+                // ២. ចម្រាញ់យកទិន្នន័យថ្ងៃនេះ
+                const todayList = list.filter(i => {
+                    let recordDate = i.date || new Date(i.id).toLocaleDateString('km-KH');
+                    return recordDate === today;
+                });
+
+                // ៣. គណនាចំនួនសរុប (វត្តមាន, ច្បាប់, អវត្តមាន) - គណនាពី todayList ទាំងមូល
+                let p = 0, l = 0, a = 0;
+                todayList.forEach(i => {
+                    if (i.status === "វត្តមាន") p++;
+                    else if (i.status === "ច្បាប់") l++;
+                    else if (i.status === "អវត្តមាន") a++;
+                });
+
+                // ៤. រៀបចំការបំបែកទំព័រ (Pagination)
+                const totalPages = Math.ceil(todayList.length / rowsPerPage) || 1;
+                if (currentPage > totalPages) currentPage = totalPages; // ការពារ Error ពេលលុបឈ្មោះអស់
+                
+                const start = (currentPage - 1) * rowsPerPage;
+                const end = start + rowsPerPage;
+                const paginatedItems = todayList.slice(start, end);
+
+                // ៥. Render ទិន្នន័យទៅក្នុងតារាង
+                body.innerHTML = "";
+                if (paginatedItems.length === 0) {
+                    body.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:20px; color:gray;">មិនទាន់មានទិន្នន័យសម្រាប់ថ្ងៃនេះទេ</td></tr>`;
+                }
+
+                paginatedItems.forEach(i => {
+                    let statusColor = i.status === 'វត្តមាន' ? '#2e7d32' : (i.status === 'ច្បាប់' ? '#ef6c00' : '#c62828');
+                    let statusBg = i.status === 'វត្តមាន' ? '#e8f5e9' : (i.status === 'ច្បាប់' ? '#fff3e0' : '#ffe6e6');
+
+                    let actions = `<i class="fas fa-edit" onclick="editItem(${i.id})" style="color:#1a73e8; cursor:pointer" title="កែប្រែ"></i>`;
+                    if(window.currentUserRole === 'admin') {
+                        actions += ` <i class="fas fa-trash-alt" onclick="deleteItem(${i.id})" style="color:#d93025; cursor:pointer; margin-left:15px" title="លុប"></i>`;
+                    }
+
+                    body.innerHTML += `
+                        <tr style="border: 1px solid #ddd;">
+                            <td style="padding: 15px; text-align: left;">
+                                <div style="font-weight: 500;">${i.name}</div>
+                                <small style="color: #777;">ម៉ោង: ${i.time || '--:--'}</small>
+                            </td>
+                            <td style="padding: 15px; text-align: center;">${i.gender}</td>
+                            <td style="padding: 15px; text-align: center;">
+                                <span style="background: ${statusBg}; color: ${statusColor}; padding: 5px 12px; border-radius: 15px; font-weight: bold; font-size: 0.85rem;">
+                                    ${i.status}
+                                </span>
+                            </td>
+                            <td class="no-print" style="padding: 15px; text-align: center;">${actions}</td>
+                        </tr>`;
+                });
+
+                // ៦. បោះលេខសរុបទៅ Stat-box
+                if (document.getElementById('sumPresent')) document.getElementById('sumPresent').innerText = p;
+                if (document.getElementById('sumLeave')) document.getElementById('sumLeave').innerText = l;
+                if (document.getElementById('sumAbsent')) document.getElementById('sumAbsent').innerText = a;
+
+                // ៧. បង្ហាញប៊ូតុងប្តូរទំព័រ
+                renderPaginationControls(totalPages);
+
+                if (typeof syncInfo === 'function') syncInfo();
+            }
+
+            function renderPaginationControls(total) {
+                let controls = document.getElementById('paginationControls');
+                if (!controls) {
+                    controls = document.createElement('div');
+                    controls.id = 'paginationControls';
+                    controls.className = 'no-print';
+                    controls.style = "text-align:center; margin-top:15px; display:flex; justify-content:center; align-items:center; gap:15px;";
+                    // ដាក់វាឱ្យនៅខាងក្រោមតារាងវត្តមាន
+                    const tableArea = document.getElementById('attTable').parentElement;
+                    tableArea.after(controls);
+                }
+                
+                if (total <= 1) {
+                    controls.innerHTML = ""; // បើមានតែ ១ ទំព័រ មិនបាច់បង្ហាញប៊ូតុងទេ
+                    return;
+                }
+
+                controls.innerHTML = `
+                    <button onclick="changePage(-1)" ${currentPage === 1 ? 'disabled' : ''} 
+                        style="padding:5px 15px; cursor:pointer; border-radius:5px; border:1px solid #ccc; background:#fff;">
+                        <i class="fas fa-chevron-left"></i> ថយក្រោយ
+                    </button>
+                    <span style="font-weight:bold; color:var(--primary);">ទំព័រ ${currentPage} / ${total}</span>
+                    <button onclick="changePage(1)" ${currentPage >= total ? 'disabled' : ''} 
+                        style="padding:5px 15px; cursor:pointer; border-radius:5px; border:1px solid #ccc; background:#fff;">
+                        បន្ទាប់ <i class="fas fa-chevron-right"></i>
+                    </button>
+                `;
+            }
+            async function downloadForTelegram() {
+            // ឆែកមើលថាមាន Library ឬនៅ បើអត់ទេ កុំឱ្យវាគាំង System
+            if (!window.jspdf || !window.html2canvas) {
+                alert("កុំព្យូទ័រមិនទាន់មានបណ្ណាល័យសម្រាប់ទាញយកទេ! សូមឆែកការភ្ជាប់អ៊ីនធឺណិត។");
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const area = document.getElementById('exportArea'); 
+            if (!area) return alert("រកមិនឃើញតំបន់ទាញយក (exportArea)!");
+
+            // ១. រក្សាទុកស្ថានភាពដើម និងទិន្នន័យ
+            const originalPage = currentPage; 
+            const list = JSON.parse(localStorage.getItem('sys_data')) || [];
+            const today = new Date().toLocaleDateString('km-KH');
+            const todayList = list.filter(i => (i.date || new Date(i.id).toLocaleDateString('km-KH')) === today);
+
+            if (todayList.length === 0) return alert("មិនមានទិន្នន័យសម្រាប់ថ្ងៃនេះទេ!");
+
+            // ២. ពន្លាតតារាងបណ្តោះអាសន្ន ដើម្បីឱ្យឃើញឈ្មោះសិស្សទាំងអស់
+            const body = document.getElementById('attTable');
+            if (!body) return;
+
+            // លាក់ប៊ូតុង និង Pagination មួយភ្លែត
+            const noPrintElements = document.querySelectorAll('.no-print');
+            noPrintElements.forEach(el => el.style.display = 'none');
+
+            // Render ឈ្មោះទាំងអស់ចូលក្នុងតារាង (Temporary Expand)
+            body.innerHTML = todayList.map(i => {
+                let statusColor = i.status === 'វត្តមាន' ? '#2e7d32' : (i.status === 'ច្បាប់' ? '#ef6c00' : '#c62828');
+                let statusBg = i.status === 'វត្តមាន' ? '#e8f5e9' : (i.status === 'ច្បាប់' ? '#fff3e0' : '#ffe6e6');
+                return `
+                    <tr style="border: 1px solid #ddd;">
+                        <td style="padding: 15px; text-align: left;">
+                            <div style="font-weight: 500;">${i.name}</div>
+                            <small style="color: #777;">ម៉ោង: ${i.time || '--:--'}</small>
+                        </td>
+                        <td style="padding: 15px; text-align: center;">${i.gender}</td>
+                        <td style="padding: 15px; text-align: center;">
+                            <span style="background: ${statusBg}; color: ${statusColor}; padding: 5px 12px; border-radius: 15px; font-weight: bold; font-size: 0.85rem;">
+                                ${i.status}
+                            </span>
+                        </td>
+                        <td class="no-print"></td>
+                    </tr>`;
+            }).join('');
+
+            try {
+                // ៣. ថតរូបតំបន់ exportArea ទាំងមូល (មាន Logo, ឈ្មោះគ្រូ, តារាងដែលពន្លាតរួច)
+                const canvas = await html2canvas(area, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: "#ffffff"
+                });
+
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const imgWidth = pdfWidth;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                
+                let heightLeft = imgHeight;
+                let position = 0;
+                const pageHeight = pdf.internal.pageSize.getHeight();
+
+                // បន្ថែមរូបភាពចូល PDF
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+
+                pdf.save(`របាយការណ៍_${today}.pdf`);
+
+            } catch (error) {
+                console.error("Error generating PDF:", error);
+                alert("មានបញ្ហាក្នុងការទាញយក File!");
+            } finally {
+                // ៤. កំណត់អ្វីៗគ្រប់យ៉ាងឱ្យមកសភាពដើមវិញ (Pagination ដើរវិញ)
+                noPrintElements.forEach(el => el.style.display = '');
+                currentPage = originalPage; 
+                renderAttendance(list); 
+            }
+        }
+        function changePage(step) {
+            const list = JSON.parse(localStorage.getItem('sys_data')) || [];
+            const today = new Date().toLocaleDateString('km-KH');
+            const todayList = list.filter(i => (i.date || new Date(i.id).toLocaleDateString('km-KH')) === today);
+            
+            const totalPages = Math.ceil(todayList.length / rowsPerPage) || 1;
+            
+            currentPage += step;
+            
+            // បង្ការកុំឱ្យលើសទំព័រ
+            if (currentPage < 1) currentPage = 1;
+            if (currentPage > totalPages) currentPage = totalPages;
+
+            renderAttendance(list);
+        }
+
+            function updateManualTotal() {
+                const val = document.getElementById('manualTotalInput').value;
+                const display = document.getElementById('sumTotal');
+                if (display) {
+                    display.innerText = val || "0";
+                }
+            }
+
+
+            function renderScoreTable(master) {
+                const tbody = document.getElementById('scoreTableBody');
+                if (!tbody) return;
+
+                tbody.innerHTML = master.map((s) => {
+                    const scores = s.scores || {cpp: 0, cs: 0, web: 0, db: 0};
+                    const avg = (scores.cpp + scores.cs + scores.web + scores.db) / 4;
+                    return `
+                    <tr>
+                        <td>${s.name}</td>
+                        <td><input type="number" value="${scores.cpp}" id="cpp_${s.id}" style="width:60px"></td>
+                        <td><input type="number" value="${scores.cs}" id="cs_${s.id}" style="width:60px"></td>
+                        <td><input type="number" value="${scores.web}" id="web_${s.id}" style="width:60px"></td>
+                        <td><input type="number" value="${scores.db}" id="db_${s.id}" style="width:60px"></td>
+                        <td><b id="avg_display_${s.id}">${avg.toFixed(2)}</b></td>
+                        <td>
+                            <button class="btn btn-success" onclick="saveScore(${s.id})">
+                                <i class="fas fa-save"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    `;
+                }).join('');
+            }
+
+            function saveScore(id) {
+                let master = JSON.parse(localStorage.getItem('sys_master_students')) || [];
+                const studentIndex = master.findIndex(s => s.id === id);
+                
+                if (studentIndex !== -1) {
+                    const cpp = parseFloat(document.getElementById(`cpp_${id}`).value) || 0;
+                    const cs = parseFloat(document.getElementById(`cs_${id}`).value) || 0;
+                    const web = parseFloat(document.getElementById(`web_${id}`).value) || 0;
+                    const db = parseFloat(document.getElementById(`db_${id}`).value) || 0;
+
+                    master[studentIndex].scores = { cpp, cs, web, db };
+                    localStorage.setItem('sys_master_students', JSON.stringify(master));
+                    
+                    alert("រក្សាទុកពិន្ទុរួចរាល់!");
+                    renderAll();
+                }
+            }
+
+
+            function renderWarehouse(list) {
+                const attBody = document.getElementById('attWarehouseTable');
+                const scoreBody = document.getElementById('scoreWarehouseTable');
+                const master = JSON.parse(localStorage.getItem('sys_master_students')) || [];
+                const filterVal = document.getElementById('filterDate').value; 
+                
+                attBody.innerHTML = "";
+                scoreBody.innerHTML = "";
+
+                //  Input  Format 
+                let formattedFilterDate = "";
+                if (filterVal) {
+                    formattedFilterDate = new Date(filterVal).toLocaleDateString('km-KH');
+                }
+
+                list.slice().reverse().forEach(i => {
+                    let show = true;
+                    // record
+                    let recordDate = i.date || new Date(i.id).toLocaleDateString('km-KH');
+
+                    if (filterVal) {
+                        if (recordDate !== formattedFilterDate) show = false;
+                    }
+
+                    if (show) {
+                        let dateStr = i.date + " " + (i.time || "");
+                        if(!i.date) dateStr = new Date(i.id).toLocaleString('km-KH');
+
+                        let statusColor = i.status === 'វត្តមាន' ? 'var(--success)' : (i.status === 'ច្បាប់' ? 'var(--warning)' : 'var(--danger)');
+                        
+                        let adminActions = window.currentUserRole === 'admin' ? `
+                            <i class="fas fa-edit" onclick="editItem(${i.id})" style="color:var(--primary); cursor:pointer; margin-right:10px"></i>
+                            <i class="fas fa-trash-alt" onclick="deleteItem(${i.id})" style="color:var(--danger); cursor:pointer"></i>
+                        ` : '';
+
+                        attBody.innerHTML += `
+                            <tr>
+                                <td><small>${dateStr}</small></td>
+                                <td>${i.name}</td>
+                                <td>${i.gender}</td>
+                                <td><span class="badge" style="background:${statusColor}">${i.status}</span></td>
+                                <td class="no-print">${adminActions}</td>
+                            </tr>`;
+                    }
+                });
+
+                let scoreList = master.map(s => {
+                    const sc = s.scores || {cpp: 0, cs: 0, web: 0, db: 0};
+                    const avg = (sc.cpp + sc.cs + sc.web + sc.db) / 4;
+                    return { name: s.name, avg: avg };
+                }).sort((a, b) => b.avg - a.avg);
+
+                scoreList.forEach((s, idx) => {
+                    let grade = s.avg >= 90 ? 'A' : (s.avg >= 80 ? 'B' : (s.avg >= 70 ? 'C' : (s.avg >= 60 ? 'D' : (s.avg >= 50 ? 'E' : 'F'))));
+                    let passed = s.avg >= 50 ? '<span style="color:green">ជាប់</span>' : '<span style="color:red">ធ្លាក់</span>';
+                    scoreBody.innerHTML += `
+                        <tr class="${idx === 0 && s.avg > 0 ? 'rank-1' : ''}">
+                            <td>${idx + 1}</td>
+                            <td>${s.name}</td>
+                            <td><b>${s.avg.toFixed(2)}</b></td>
+                            <td>${grade}</td>
+                            <td>${passed}</td>
+                        </tr>`;
+                });
+            }
+
+            function renderSchedule(schedule) {
+                const body = document.getElementById('scheduleBody');
+                const times = ["07:30 - 09:00", "09:30 - 11:00", "01:00 - 14:30", "14:45 - 16:15"];
+                body.innerHTML = "";
+
+                times.forEach((time, r) => {
+                    let row = `<tr><td class="time-col">${time}</td>`;
+                    for (let c = 1; c <= 5; c++) {
+                        const val = schedule[`sch_${r}_${c}`] || "";
+                        row += `<td><textarea class="sch-input" id="sch_${r}_${c}">${val}</textarea></td>`;
+                    }
+                    row += `</tr>`;
+                    body.innerHTML += row;
+                });
+            }
+
+            function saveSchedule() {
+                let schedule = {};
+                const times = ["07:30 - 09:00", "09:30 - 11:00", "01:00 - 14:30", "14:45 - 16:15"];
+                times.forEach((_, r) => {
+                    for (let c = 1; c <= 5; c++) {
+                        const id = `sch_${r}_${c}`;
+                        schedule[id] = document.getElementById(id).value;
+                    }
+                });
+                localStorage.setItem('sys_schedule', JSON.stringify(schedule));
+                alert("Schedule saved!");
+                renderAll();
+            }
+
+            function updateStats(list) {
+                try {
+                    const today = new Date().toLocaleDateString('km-KH');
+                    const todayData = list.filter(item => {
+                        let recordDate = item.date || new Date(item.id).toLocaleDateString('km-KH');
+                        return recordDate === today;
+                    });
+                    const p = todayData.filter(r => r.status === "វត្តមាន").length;
+                    const l = todayData.filter(r => r.status === "ច្បាប់").length;
+                    const a = todayData.filter(r => r.status === "អវត្តមាន").length;
+
+                    const pEl = document.getElementById('pCount');
+                    const lEl = document.getElementById('lCount');
+                    const aEl = document.getElementById('aCount');
+
+                    if (pEl) pEl.innerText = p;
+                    if (lEl) lEl.innerText = l;
+                    if (aEl) aEl.innerText = a;
+
+                    if (typeof pieChart !== 'undefined' && pieChart !== null) {
+                        updateCharts(p, l, a);
+                    }
+                    
+                } catch (error) {
+                    console.error("បញ្ហាត្រង់ updateStats:", error);
+                }
+            }
+            
+
+            function editItem(id) {
+                let list = JSON.parse(localStorage.getItem('sys_data')) || [];
+                let index = list.findIndex(x => x.id === id);
+                if(index === -1) return;
+
+                let item = list[index];
+                let newName = prompt("កែឈ្មោះសិស្ស:", item.name);
+                if(newName === null) return; // ចុច Cancel
+
+                let newStatus = prompt("កែស្ថានភាព (វត្តមាន, ច្បាប់, អវត្តមាន):", item.status);
+                if(newStatus === null) return;
+
+                list[index].name = newName;
+                list[index].status = newStatus;
+
+                localStorage.setItem('sys_data', JSON.stringify(list));
+                renderAll();
+            }
+
+            function deleteItem(id) {
+                if(!confirm("Delete this record?")) return;
+                let list = JSON.parse(localStorage.getItem('sys_data')) || [];
+                localStorage.setItem('sys_data', JSON.stringify(list.filter(x => x.id !== id)));
+                renderAll();
+            }
+
+            function clearAllData() { if(confirm("Reset all data?")) { localStorage.removeItem('sys_data'); renderAll(); } }
+
+            function switchTab(id) {
+                document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+                document.getElementById(id).classList.add('active');
+            }
+
+            function initCharts() {
+                pieChart = new Chart(document.getElementById('pieChart'), { type: 'doughnut', data: { labels: ['Present', 'Leave', 'Absent'], datasets: [{ data: [0,0,0], backgroundColor: ['#00b894', '#f1c40f', '#d63031'] }] } });
+                barChart = new Chart(document.getElementById('barChart'), { type: 'bar', data: { labels: ['Present', 'Leave', 'Absent'], datasets: [{ label: 'Count', data: [0,0,0], backgroundColor: ['#00b894', '#f1c40f', '#d63031'] }] } });
+            }
+            
+            function updateCharts(p, l, a) {
+                pieChart.data.datasets[0].data = [p, l, a]; pieChart.update();
+                barChart.data.datasets[0].data = [p, l, a]; barChart.update();
+            }
+
+            async function downloadPDF() {
+                const { jsPDF } = window.jspdf;
+                const area = document.getElementById('exportArea');
+                
+                // លាក់ប៊ូតុងដែលមិនចង់ឱ្យជាប់ក្នុង File
+                const noPrint = document.querySelectorAll('.no-print');
+                noPrint.forEach(e => e.style.display = 'none');
+
+                // បង្កើត Canvas ពីតំបន់វត្តមាន
+                const canvas = await html2canvas(area, {
+                    scale: 2, // បង្កើនកម្រិតច្បាស់
+                    useCORS: true,
+                    logging: false
+                });
+
+                const imgData = canvas.toDataURL('image/png');
+                
+                // កំណត់ទំហំក្រដាស A4
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const imgProps = pdf.getImageProperties(imgData);
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                
+                let heightLeft = pdfHeight;
+                let position = 0;
+                const pageHeight = pdf.internal.pageSize.getHeight();
+
+                // បន្ថែមទំព័រទី១
+                pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+                heightLeft -= pageHeight;
+
+                // ប្រសិនបើវែងជាងមួយទំព័រ វានឹងបង្កើតទំព័រថ្មី (Pagination)
+                while (heightLeft >= 0) {
+                    position = heightLeft - pdfHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+                    heightLeft -= pageHeight;
+                }
+
+                // ទាញយកជា PDF
+                pdf.save(`Attendance_Report_${Date.now()}.pdf`);
+
+                // បង្ហាញប៊ូតុងកែ/លុប មកវិញ
+                noPrint.forEach(e => e.style.display = 'table-cell');
+            }
+
+            function updateAnalytics() {
+                // ប្តូរទៅ Tab Analytics
+                switchTab('analytics');
+
+                const currentAttendance = JSON.parse(localStorage.getItem('sys_data')) || [];
+                const currentStudents = JSON.parse(localStorage.getItem('sys_master_students')) || [];
+
+                const attData = [
+                    currentAttendance.filter(r => r.status === "វត្តមាន").length,
+                    currentAttendance.filter(r => r.status === "ច្បាប់").length,
+                    currentAttendance.filter(r => r.status === "អវត្តមាន").length
+                ];
+                renderChart('attendanceChart', 'pie', ['វត្តមាន', 'ច្បាប់', 'អវត្តមាន'], attData, ['#00b894', '#f1c40f', '#d63031']);
+
+                // --- ២. គណនាទិន្នន័យភេទសិស្ស ---
+                const genderData = [
+                    currentStudents.filter(s => s.gender === "ប្រុស" || s.gender === "Male").length,
+                    currentStudents.filter(s => s.gender === "ស្រី" || s.gender === "Female").length
+                ];
+                renderChart('genderChart', 'doughnut', ['ប្រុស', 'ស្រី'], genderData, ['#6c5ce7', '#fd79a8']);
+
+                // --- ៣. គណនាទិន្នន័យពិន្ទុ (មធ្យមភាគ) ---
+                let grades = { 'A-B (ល្អ)': 0, 'C-D (មធ្យម)': 0, 'E-F (ខ្សោយ)': 0 };
+                currentStudents.forEach(s => {
+                    const sc = s.scores || { cpp: 0, cs: 0, web: 0, db: 0 };
+                    const avg = (parseFloat(sc.cpp || 0) + parseFloat(sc.cs || 0) + parseFloat(sc.web || 0) + parseFloat(sc.db || 0)) / 4;
+                    if (avg >= 80) grades['A-B (ល្អ)']++;
+                    else if (avg >= 50) grades['C-D (មធ្យម)']++;
+                    else grades['E-F (ខ្សោយ)']++;
+                });
+                renderChart('scoreChart', 'bar', Object.keys(grades), Object.values(grades), ['#0984e3', '#fdb913', '#e74c3c']);
+            }
+
+            // អនុគមន៍សម្រាប់បង្កើតក្រាហ្វិក (Helper Function)
+            function renderChart(canvasId, type, labels, data, colors) {
+                const canvas = document.getElementById(canvasId);
+                if (!canvas) return;
+
+                // លុប Chart ចាស់ចេញមុននឹងបង្កើតថ្មី ដើម្បីកុំឱ្យគាំង
+                const existingChart = Chart.getChart(canvas);
+                if (existingChart) {
+                    existingChart.destroy();
+                }
+
+                new Chart(canvas, {
+                    type: type,
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: colors,
+                            borderColor: 'white',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        }
+                    }
+                });
+            }
+
+            function openScanner() {
+                document.getElementById('scannerModal').style.display = 'flex';
+                if (!html5QrCode) {
+                    html5QrCode = new Html5Qrcode("reader");
+                }
+                const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+                html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess).catch(err => {
+                    alert("Camera error or permission denied!");
+                });
+            }
+
+            function onScanSuccess(decodedText) {
+                const studentID = decodedText.trim();
+                const currentTime = Date.now();
+                const COOLDOWN_TIME = 120 * 60 * 1000;
+
+                if (studentID === lastScannedID) return;
+
+                let master = JSON.parse(localStorage.getItem('sys_master_students')) || [];
+                let student = master.find(s => s.stuID === studentID);
+                
+                if (student) {
+                    let attendanceList = JSON.parse(localStorage.getItem('sys_data')) || [];
+                    let lastRecord = attendanceList.filter(r => r.stuID === studentID).reverse()[0];
+
+                    if (lastRecord && (currentTime - lastRecord.id < COOLDOWN_TIME)) {
+                        let remainingSec = Math.ceil((COOLDOWN_TIME - (currentTime - lastRecord.id)) / 1000);
+                        let remainingMin = Math.floor(remainingSec / 60);
+                        alert(`ស្កែនមិនទាន់បានទេ! សិស្សឈ្មោះ ${student.name} ទើបតែស្កែនរួច។ សូមរង់ចាំ ${remainingMin} នាទីទៀត។`);
+                        return;
+                    }
+                    recordAttendance(student);
+                    let audio = new Audio('https://www.soundjay.com/buttons/beep-07a.mp3');
+                    audio.play().catch(e => console.log(e)); 
+                    lastScannedID = studentID;
+                    setTimeout(() => { lastScannedID = ""; }, 3000); 
+                    let successUI = document.getElementById('scanSuccess');
+                    if(successUI) {
+                        successUI.style.display = 'block';
+                        setTimeout(() => { successUI.style.display = 'none'; }, 1500);
+                    }
+                } else {
+                    alert("រកមិនឃើញ ID: " + studentID);
+                }
+            }
+
+            function recordAttendance(stu) {
+                const now = new Date();
+                let list = JSON.parse(localStorage.getItem('sys_data')) || [];
+                
+                const record = {
+                    id: Date.now(),
+                    stuID: stu.stuID,
+                    name: stu.name,
+                    gender: stu.gender,
+                    status: "វត្តមាន",
+                    time: now.toLocaleTimeString('km-KH', { hour: '2-digit', minute: '2-digit' }), 
+                    date: now.toLocaleDateString('km-KH'),
+                    scores: {cpp:0, cs:0, web:0, db:0} 
+                };
+                
+                list.push(record);
+                localStorage.setItem('sys_data', JSON.stringify(list));
+                renderAll(); 
+            }
+
+            function closeScanner() {
+                if (html5QrCode) {
+                    html5QrCode.stop().then(() => {
+                        document.getElementById('scannerModal').style.display = 'none';
+                    }).catch(() => {
+                        document.getElementById('scannerModal').style.display = 'none';
+                    });
+                } else {
+                    document.getElementById('scannerModal').style.display = 'none';
+                }
+            }
+
+        </script>
+    </body> 
+</html>
